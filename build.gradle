@@ -1,0 +1,32 @@
+plugins {
+    id 'java'
+}
+
+group = 'ru.itwizardry'
+version = '0.0.1-SNAPSHOT'
+
+allprojects {
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
+
+    dependencies {
+        testImplementation platform('org.junit:junit-bom:5.10.0')
+        testImplementation 'org.junit.jupiter:junit-jupiter'
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    }
+
+    test {
+        useJUnitPlatform()
+    }
+}

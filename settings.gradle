@@ -1,0 +1,2 @@
+rootProject.name = 'java-backend-journey'
+include 'module-1-git-algorithms'
