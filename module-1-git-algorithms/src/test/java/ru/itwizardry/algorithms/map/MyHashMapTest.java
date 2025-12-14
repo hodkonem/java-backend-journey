@@ -34,6 +34,22 @@ class MyHashMapTest {
     }
 
     @Test
+    void putShouldTriggerResizeAndPreserveAllEntries() {
+        MyMap<Integer, Integer> m = new MyHashMap<>();
+
+        for (int i = 0; i < 50; i++) {
+            m.put(i, i * 10);
+        }
+
+        assertEquals(50, m.size());
+
+        for (int i = 0; i < 50; i++) {
+            assertEquals(i * 10, m.get(i));
+
+        }
+    }
+
+    @Test
     void getShouldReturnNullIfKeyDoesNotExist() {
         map.put("Moscow", 1);
 
