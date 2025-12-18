@@ -29,4 +29,8 @@ subprojects {
     test {
         useJUnitPlatform()
     }
+
+    tasks.withType(JavaExec).configureEach {
+        environment System.getenv()
+    }
 }
