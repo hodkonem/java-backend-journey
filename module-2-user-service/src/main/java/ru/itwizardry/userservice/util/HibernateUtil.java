@@ -1,8 +1,14 @@
 package ru.itwizardry.userservice.util;
 
 import org.hibernate.SessionFactory;
-import org.hibernate.cfg.Configuration;
+import org.hibernate.boot.Metadata;
+import org.hibernate.boot.MetadataSources;
+import org.hibernate.boot.registry.StandardServiceRegistry;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import ru.itwizardry.userservice.entity.User;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public final class HibernateUtil {
 
@@ -12,33 +18,36 @@ public final class HibernateUtil {
     }
 
     private static SessionFactory buildSessionFactory() {
-        try {
-            Configuration configuration = new Configuration();
+        StandardServiceRegistry registry = null;
 
+        try {
             String host = env("POSTGRES_HOST", "localhost");
             String port = env("POSTGRES_PORT", "5432");
-            String db   = requireEnv("POSTGRES_DB");
+            String db   = env("POSTGRES_DB", "user_service");
             String user = requireEnv("POSTGRES_USER");
             String pass = requireEnv("POSTGRES_PASSWORD");
 
-            configuration.setProperty(
-                    "hibernate.connection.driver_class",
-                    "org.postgresql.Driver"
-            );
+            Map<String, Object> settings = new HashMap<>();
+            settings.put("hibernate.connection.driver_class", "org.postgresql.Driver");
+            settings.put("hibernate.connection.url",
+                    "jdbc:postgresql://" + host + ":" + port + "/" + db);
+            settings.put("hibernate.connection.username", user);
+            settings.put("hibernate.connection.password", pass);
 
-            configuration.setProperty(
-                    "hibernate.connection.url",
-                    "jdbc:postgresql://" + host + ":" + port + "/" + db
-            );
+            registry = new StandardServiceRegistryBuilder()
+                    .applySettings(settings)
+                    .build();
 
-            configuration.setProperty("hibernate.connection.username", user);
-            configuration.setProperty("hibernate.connection.password", pass);
+            Metadata metadata = new MetadataSources(registry)
+                    .addAnnotatedClass(User.class)
+                    .buildMetadata();
 
-            configuration.addAnnotatedClass(User.class);
-
-            return configuration.buildSessionFactory();
+            return metadata.buildSessionFactory();
 
         } catch (Exception e) {
+            if (registry != null) {
+                StandardServiceRegistryBuilder.destroy(registry);
+            }
             ExceptionInInitializerError err =
                     new ExceptionInInitializerError("Initial SessionFactory creation failed");
             err.initCause(e);
@@ -64,6 +73,6 @@ public final class HibernateUtil {
     }
 
     public static void shutdown() {
-        getSessionFactory().close();
+        SESSION_FACTORY.close();
     }
 }
