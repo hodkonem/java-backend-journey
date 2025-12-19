@@ -29,11 +29,60 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
-
 application {
-    mainClass = 'ru.itwizardry.userservice.app.HibernateTestApp'
+    mainClass = 'ru.itwizardry.userservice.app.Main'
 }
 
 test {
     useJUnitPlatform()
+}
+
+/*
+ * ===== .env support =====
+ * Подгружаем переменные из .env,
+ * но НЕ перетираем уже существующие env (важно для CI / Docker / prod)
+ */
+
+def loadDotEnv(File file) {
+    def props = new Properties()
+    if (!file.exists()) return props
+
+    file.eachLine { line ->
+        def s = line.trim()
+        if (!s || s.startsWith("#")) return
+
+        int idx = s.indexOf("=")
+        if (idx <= 0) return
+
+        def key = s.substring(0, idx).trim()
+        def value = s.substring(idx + 1).trim()
+
+        // убираем кавычки
+        if ((value.startsWith('"') && value.endsWith('"')) ||
+                (value.startsWith("'") && value.endsWith("'"))) {
+            value = value.substring(1, value.length() - 1)
+        }
+
+        props.setProperty(key, value)
+    }
+    return props
+}
+
+def dotEnvFile = rootProject.file(".env")
+def dotEnv = loadDotEnv(dotEnvFile)
+
+tasks.withType(JavaExec).configureEach {
+    dotEnv.each { k, v ->
+        if (System.getenv(k.toString()) == null) {
+            environment k.toString(), v.toString()
+        }
+    }
+}
+
+tasks.withType(Test).configureEach {
+    dotEnv.each { k, v ->
+        if (System.getenv(k.toString()) == null) {
+            environment k.toString(), v.toString()
+        }
+    }
 }
