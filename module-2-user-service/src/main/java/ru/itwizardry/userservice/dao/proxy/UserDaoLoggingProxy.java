@@ -1,21 +1,17 @@
 package ru.itwizardry.userservice.dao.proxy;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import ru.itwizardry.userservice.dao.UserDao;
 import ru.itwizardry.userservice.entity.User;
 
-import java.util.Objects;
 import java.util.function.Supplier;
 
+@Slf4j
+@RequiredArgsConstructor
 public class UserDaoLoggingProxy implements UserDao {
-    private static final Logger log = LoggerFactory.getLogger(UserDaoLoggingProxy.class);
 
     private final UserDao target;
-
-    public UserDaoLoggingProxy(UserDao target) {
-        this.target = Objects.requireNonNull(target, "target");
-    }
 
     @Override
     public User findById(Long id) {
@@ -24,7 +20,7 @@ public class UserDaoLoggingProxy implements UserDao {
 
     @Override
     public User findByEmail(String email) {
-        return timed("UserDao.findByEmail", () -> target.findByEmail(email));
+        return timed("UserDao.findByEmail(email=" + email + ")", () -> target.findByEmail(email));
     }
 
     @Override
