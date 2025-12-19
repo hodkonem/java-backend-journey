@@ -2,92 +2,56 @@ package ru.itwizardry.userservice.dao;
 
 import org.hibernate.Session;
 import ru.itwizardry.userservice.entity.User;
-import ru.itwizardry.userservice.util.HibernateUtil;
 
-import java.util.function.Function;
+import java.util.Objects;
 
 public class UserDaoImpl implements UserDao {
 
     @Override
-    public User findById(Long id) {
+    public User findById(Session session, Long id) {
+        requireSession(session);
         if (id == null) return null;
 
-        return inSession(session -> session.find(User.class, id));
+        return session.find(User.class, id);
     }
 
     @Override
-    public User findByEmail(String email) {
+    public User findByEmail(Session session, String email) {
+        requireSession(session);
         if (email == null || email.isBlank()) return null;
 
-        return inSession(session ->
-                session.createQuery(
-                                "select u from User u where u.email = :email",
-                                User.class
-                        )
-                        .setParameter("email", email)
-                        .uniqueResultOptional()
-                        .orElse(null)
-        );
+        return session.createQuery(
+                        "select u from User u where u.email = :email",
+                        User.class
+                )
+                .setParameter("email", email)
+                .uniqueResultOptional()
+                .orElse(null);
     }
 
     @Override
-    public void save(User user) {
+    public void save(Session session, User user) {
+        requireSession(session);
         if (user == null) return;
 
-        inTx(session -> {
-            session.persist(user);
-            return null;
-        });
+        session.persist(user);
     }
 
     @Override
-    public void update(User user) {
-        if (user == null || user.getId() == null) return;
+    public void update(User managed, String name, String email, Integer age) {
+        if (managed == null) return;
 
-        inTx(session -> {
-            var managed = session.find(User.class, user.getId());
-            if (managed == null) {
-                throw new IllegalArgumentException("User not found: id=" + user.getId());
-            }
-
-            managed.setName(user.getName());
-            managed.setEmail(user.getEmail());
-            managed.setAge(user.getAge());
-
-            return null;
-        });
+        managed.setName(name);
+        managed.setEmail(email);
+        managed.setAge(age);
     }
 
     @Override
-    public void delete(User user) {
-        if (user == null || user.getId() == null) return;
-
-        inTx(session -> {
-            var managed = session.find(User.class, user.getId());
-            if (managed != null) {
-                session.remove(managed);
-            }
-            return null;
-        });
+    public void delete(User managed) {
+        if (managed == null) return;
     }
 
-    private <T> T inSession(Function<Session, T> work) {
-        try (var session = HibernateUtil.getSessionFactory().openSession()) {
-            return work.apply(session);
-        }
-    }
-
-    private <T> T inTx(Function<Session, T> work) {
-        try (var session = HibernateUtil.getSessionFactory().openSession()) {
-            var tx = session.beginTransaction();
-            try {
-                T result = work.apply(session);
-                tx.commit();
-                return result;
-            } catch (RuntimeException e) {
-                if (tx.isActive()) tx.rollback();
-                throw e;
-            }
-        }
+    private void requireSession(Session session) {
+        Objects.requireNonNull(session, "Session must not be null");
     }
 }
