@@ -1,16 +1,17 @@
 package ru.itwizardry.userservice.dao;
 
-import org.hibernate.Session;
 import ru.itwizardry.userservice.entity.User;
 
+import java.util.Optional;
+
 public interface UserDao {
-    User findById(Session session, Long id);
+    Optional<User> findById(Long id);
 
-    User findByEmail(Session session, String email);
+    Optional<User> findByEmail(String email);
 
-    void save(Session session, User user);
+    User save(User user);
 
-    void update(User managed, String name, String email, Integer age);
+    int updateById(Long id, String name, String email, Integer age);
 
-    void delete(User managed);
+    int delete(Long id);
 }
