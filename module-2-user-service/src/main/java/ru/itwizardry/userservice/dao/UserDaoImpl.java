@@ -3,55 +3,58 @@ package ru.itwizardry.userservice.dao;
 import org.hibernate.Session;
 import ru.itwizardry.userservice.entity.User;
 
-import java.util.Objects;
+import java.util.Optional;
 
 public class UserDaoImpl implements UserDao {
+    private final Session session;
+
+    public UserDaoImpl(Session session) {
+        this.session = session;
+    }
+
 
     @Override
-    public User findById(Session session, Long id) {
-        requireSession(session);
-        if (id == null) return null;
-
-        return session.find(User.class, id);
+    public Optional<User> findById(Long id) {
+        return Optional.ofNullable(session.find(User.class, id));
     }
 
     @Override
-    public User findByEmail(Session session, String email) {
-        requireSession(session);
-        if (email == null || email.isBlank()) return null;
-
+    public Optional<User> findByEmail(String email) {
         return session.createQuery(
                         "select u from User u where u.email = :email",
                         User.class
                 )
                 .setParameter("email", email)
-                .uniqueResultOptional()
-                .orElse(null);
+                .getResultStream()
+                .findFirst();
     }
 
     @Override
-    public void save(Session session, User user) {
-        requireSession(session);
-        if (user == null) return;
-
+    public User save(User user) {
         session.persist(user);
+        return user;
     }
 
     @Override
-    public void update(User managed, String name, String email, Integer age) {
-        if (managed == null) return;
-
-        managed.setName(name);
-        managed.setEmail(email);
-        managed.setAge(age);
+    public int updateById(Long id, String name, String email, Integer age) {
+        return session.createMutationQuery(
+                        "update User u " +
+                                "set u.name = :name, u.email = :email, u.age = :age " +
+                                "where u.id = :id"
+                )
+                .setParameter("name", name)
+                .setParameter("email", email)
+                .setParameter("age", age)
+                .setParameter("id", id)
+                .executeUpdate();
     }
 
     @Override
-    public void delete(User managed) {
-        if (managed == null) return;
-    }
-
-    private void requireSession(Session session) {
-        Objects.requireNonNull(session, "Session must not be null");
+    public int delete(Long id) {
+        return session.createMutationQuery(
+                        "delete from User u where u.id = :id"
+                )
+                .setParameter("id", id)
+                .executeUpdate();
     }
 }
