@@ -1,7 +1,10 @@
 package ru.itwizardry.userservice.app;
 
-import ru.itwizardry.userservice.dao.UserDaoImpl;
-import ru.itwizardry.userservice.dao.proxy.UserDaoLoggingProxy;
+import ru.itwizardry.userservice.dao.UserDao;
+import ru.itwizardry.userservice.dao.proxy.DefaultUserDaoLogFormatter;
+import ru.itwizardry.userservice.dao.proxy.LoggingUserDaoProxy;
+import ru.itwizardry.userservice.dao.proxy.MaskingUserDaoProxy;
+import ru.itwizardry.userservice.dao.proxy.TransactionalUserDaoProxy;
 import ru.itwizardry.userservice.service.UserService;
 import ru.itwizardry.userservice.service.UserServiceImpl;
 import ru.itwizardry.userservice.util.HibernateUtil;
@@ -11,9 +14,18 @@ import java.util.Scanner;
 public class Main {
 
     public static void main(String[] args) {
-        UserService userService = new UserServiceImpl(
-                new UserDaoLoggingProxy(new UserDaoImpl())
-        );
+        var sf = HibernateUtil.getSessionFactory();
+
+        UserDao dao =
+                new LoggingUserDaoProxy(
+                        new MaskingUserDaoProxy(
+                                new TransactionalUserDaoProxy(sf)
+                        ),
+                        new DefaultUserDaoLogFormatter()
+                );
+
+        UserService userService = new UserServiceImpl(dao);
+
 
         try (Scanner in = new Scanner(System.in)) {
             while (true) {
@@ -28,13 +40,13 @@ public class Main {
                         case "4" -> update(in, userService);
                         case "5" -> delete(in, userService);
                         case "0" -> {
-                            System.out.println("Bye!");
+                            System.out.println("Goodbye");
                             return;
                         }
                         default -> System.out.println("Unknown command: " + cmd);
                     }
                 } catch (NumberFormatException e) {
-                    System.out.println("Invalid number format.");
+                    System.out.println("Id/Age must be a number.");
                 } catch (IllegalArgumentException | IllegalStateException e) {
                     System.out.println("Error: " + e.getMessage());
                 }
@@ -59,14 +71,13 @@ public class Main {
 
     private static void create(Scanner in, UserService service) {
         System.out.print("Name: ");
-        String name = in.nextLine();
+        String name = in.nextLine().trim();
 
         System.out.print("Email: ");
-        String email = in.nextLine();
+        String email = in.nextLine().trim();
 
-        System.out.print("Age (empty = null): ");
-        String ageStr = in.nextLine().trim();
-        Integer age = ageStr.isBlank() ? null : Integer.valueOf(ageStr);
+        System.out.print("Age: ");
+        Integer age = Integer.valueOf(in.nextLine().trim());
 
         var user = service.create(name, email, age);
         System.out.println("Created: " + user);
@@ -82,7 +93,7 @@ public class Main {
 
     private static void getByEmail(Scanner in, UserService service) {
         System.out.print("Email: ");
-        String email = in.nextLine();
+        String email = in.nextLine().trim();
 
         var user = service.getByEmail(email);
         System.out.println(user == null ? "User not found." : user);
@@ -93,14 +104,13 @@ public class Main {
         Long id = Long.valueOf(in.nextLine().trim());
 
         System.out.print("Name: ");
-        String name = in.nextLine();
+        String name = in.nextLine().trim();
 
         System.out.print("Email: ");
-        String email = in.nextLine();
+        String email = in.nextLine().trim();
 
-        System.out.print("Age (empty = null): ");
-        String ageStr = in.nextLine().trim();
-        Integer age = ageStr.isBlank() ? null : Integer.valueOf(ageStr);
+        System.out.print("Age: ");
+        Integer age = Integer.valueOf(in.nextLine().trim());
 
         var user = service.update(id, name, email, age);
         System.out.println(user == null ? "User not found." : ("Updated: " + user));
