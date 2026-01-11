@@ -1,0 +1,4 @@
+databaseChangeLog:
+  - include:
+      file: sql/001-create-user-table.sql
+      relativeToChangelogFile: true

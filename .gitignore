@@ -1,11 +1,16 @@
 # IntelliJ IDEA
 .idea/
 *.iml
-.env
 
 # Gradle
 .gradle/
-build/
+**/build/
+**/.gradle/
+
+# Wrapper (если не используется)
+# gradlew
+# gradlew.bat
+# gradle/
 
 # OS
 .DS_Store
@@ -13,3 +18,10 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Test reports
+**/build/reports/
+
+# Application-specific sensitive configs
+src/main/resources/application-*.yml
+!src/main/resources/application.yml
