@@ -1,4 +1,4 @@
-# java-backend-journey
+# Java Backend Journey: Учебный проект по Spring, Hibernate и тестированию
 
 Учебный **multi-module** проект для последовательного изучения Java backend-разработки:  
 от базовых алгоритмов и структур данных до Hibernate, тестирования, Spring и микросервисов.
@@ -12,6 +12,12 @@
 - постепенное усложнение архитектуры и тестового покрытия
 
 ---
+## 📦 Модули проекта
+
+- **Module 1** — структуры данных на Java с нуля (реализация HashMap)
+- **Module 2** — консольное CRUD-приложение на Hibernate (без Spring)
+- **Module 3** — отдельный модуль для тестов (unit + integration)
+- **Module 4** — полноценный REST API на Spring Boot (DTO, валидация, тесты)
 
 ## 📦 Структура проекта
 
@@ -219,17 +225,100 @@ module-3-user-service-tests/build/reports/tests/test/index.html
 
 ---
 
+## 🌐 Module 4: Spring Boot API для управления пользователями
+
+### 🔧 Функциональность
+
+- REST API для управления пользователями: создание, получение, обновление, удаление
+- DTO-модели для запросов и ответов
+- Валидация входящих данных (@Valid, @NotBlank, @Email и др.)
+- Исключения с глобальным обработчиком ошибок (`@RestControllerAdvice`)
+- MapStruct для преобразования между Entity и DTO
+- Spring Data JPA + PostgreSQL
+- Liquibase для миграций
+- Полное покрытие тестами (unit, controller, integration)
+- Swagger/OpenAPI UI
+
+### 🔗 Примеры endpoints
+
+| Метод | URL | Описание |
+|-------|-----|----------|
+| `GET` | `/api/users` | Получить всех пользователей |
+| `GET` | `/api/users/{id}` | Получить пользователя по ID |
+| `POST` | `/api/users` | Создать пользователя |
+| `PUT` | `/api/users/{id}` | Обновить пользователя |
+| `DELETE` | `/api/users/{id}` | Удалить пользователя |
+
+---
+
+## 🧪 Тестирование
+
+### 📌 Модульные тесты (JUnit + Mockito)
+- `UserServiceImplTest` — логика создания, обновления, удаления, дубликаты и ошибки
+
+### 📌 Тесты контроллера (MockMvc)
+- `UserControllerTest` — все REST endpoints + негативные кейсы (400, 404, 405, 500)
+
+### 📌 Интеграционные тесты (Testcontainers + H2/Postgres)
+- `UserControllerIntegrationTest` — проверка PUT/DELETE на реальной базе
+- `UserServiceIntegrationTest` — интеграция слоя сервиса с репозиторием
+
+---
+
+## 🧪 Запуск тестов
+
+### Все тесты проекта
+```bash
+./gradlew test
+```
+
+### Только модуль 4
+```bash
+./gradlew :module-4-user-service-api:test
+```
+
+### HTML-отчёт (для просмотра результатов)
+```
+module-4-user-service-api/build/reports/tests/test/index.html
+```
+
+---
+
+## 🛠 Используемые технологии
+
+- Java 21
+- Spring Boot 3.2+
+- Spring Data JPA, Validation
+- Hibernate ORM 6+
+- Liquibase
+- PostgreSQL
+- MapStruct
+- Docker / Docker Compose
+- JUnit 5, Mockito
+- Testcontainers
+- Swagger / OpenAPI (springdoc)
+
+---
+
+## 📌 Примечания
+
+- Проект учебный, но приближен к рабочим стандартам
+- Module 2 реализован без Spring — для понимания "голого" Hibernate и транзакций
+- Module 3 — отдельный слой тестов
+- Module 4 — полноценный API с тестами, миграциями и документацией
+
+---
+
 ## 🇬🇧 English (short)
 
 Educational multi-module Java backend project.
 
 Includes:
 - custom data structures (HashMap)
-- console CRUD application with Hibernate + PostgreSQL (no Spring)
+- console CRUD app with Hibernate + PostgreSQL (no Spring)
 - layered architecture (DAO / Service)
-- infrastructure proxy chain (transactions, logging, masking)
-- separate tests module:
-  - unit tests (Mockito + JUnit 5)
-  - integration tests (Testcontainers PostgreSQL + Hibernate)
+- transaction & logging proxies
+- separate tests module (JUnit 5, Mockito, Testcontainers)
+- full-featured REST API using Spring Boot
 
-The project evolves step by step, following production-like practices.
+Step-by-step project growth following real-world backend practices.
