@@ -1,11 +1,11 @@
 package ru.itwizardry.spring.module4userserviceapi.service;
 
-
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.itwizardry.spring.module4userserviceapi.domain.event.UserCreatedEvent;
 import ru.itwizardry.spring.module4userserviceapi.dto.UserCreateRequest;
 import ru.itwizardry.spring.module4userserviceapi.dto.UserDto;
 import ru.itwizardry.spring.module4userserviceapi.dto.UserUpdateRequest;
@@ -17,55 +17,59 @@ import ru.itwizardry.spring.module4userserviceapi.repository.UserRepository;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
-    private static final Logger LOG = LoggerFactory.getLogger(UserServiceImpl.class);
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
-    @Override
     @Transactional
     public UserDto createUser(UserCreateRequest request) {
         if (userRepository.existsByEmail(request.email())) {
             throw new DuplicateEmailException(request.email());
         }
+
         User user = userMapper.toEntity(request);
         User savedUser = userRepository.save(user);
-        LOG.info("User created: {}", savedUser.getId());
+
+        eventPublisher.publishEvent(new UserCreatedEvent(
+                savedUser.getId(),
+                savedUser.getEmail(),
+                savedUser.getName(),
+                savedUser.getAge()
+        ));
+
+        log.info("User created: {}", savedUser.getId());
         return userMapper.toDto(savedUser);
     }
 
     @Override
     @Transactional
     public UserDto updateUser(Long id, UserUpdateRequest request) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(id));
 
-        if (!request.email().equals(user.getEmail())) {
-            userRepository.findByEmail(request.email())
-                    .filter(found -> !found.getId().equals(id))
-                    .ifPresent(found -> {
-                        throw new DuplicateEmailException(request.email());
-                    });
-        }
+        userRepository.findByEmail(request.email())
+                .filter(found -> !found.getId().equals(id))
+                .ifPresent(found -> {
+                    throw new DuplicateEmailException(request.email());
+                });
 
-        userMapper.updateEntity(user, request);
+        int updated = userRepository.updateByIdReturningCount(id, request.name(), request.email(), request.age());
+        if (updated == 0) throw new UserNotFoundException(id);
 
-        User savedUser = userRepository.save(user);
-        LOG.info("User updated: {}", savedUser.getId());
-
-        return userMapper.toDto(savedUser);
+        User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
+        log.info("User updated: {}", id);
+        return userMapper.toDto(user);
     }
 
     @Override
     @Transactional
     public void deleteUser(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(id));
-        userRepository.delete(user);
-        LOG.info("User deleted: {}", id);
+        int deleted = userRepository.deleteByIdReturningCount(id);
+        if (deleted == 0) throw new UserNotFoundException(id);
+        log.info("User deleted: {}", id);
     }
 
     @Override

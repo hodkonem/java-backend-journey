@@ -24,4 +24,4 @@ Thumbs.db
 
 # Application-specific sensitive configs
 src/main/resources/application-*.yml
-!src/main/resources/application.yml
+!src/main/resources/application.yml.env
