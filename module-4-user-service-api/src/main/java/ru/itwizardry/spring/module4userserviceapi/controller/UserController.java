@@ -3,6 +3,7 @@ package ru.itwizardry.spring.module4userserviceapi.controller;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -37,31 +38,31 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserDto> getUser(@PathVariable Long id) {
-        return ResponseEntity.ok(userService.getUserById(id));
+    public UserDto getUser(@PathVariable Long id) {
+        return userService.getUserById(id);
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<UserDto>> findByAge(@RequestParam @Min(1) int age) {
-        return ResponseEntity.ok(userService.findByAge(age));
+    public List<UserDto> findByAge(@RequestParam @Min(1) int age) {
+        return userService.findByAge(age);
     }
 
     @GetMapping
-    public ResponseEntity<List<UserDto>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
+    public List<UserDto> getAllUsers() {
+        return userService.getAllUsers();
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UserDto> updateUser(
+    public UserDto updateUser(
             @PathVariable Long id,
             @RequestBody @Valid UserUpdateRequest request
     ) {
-        return ResponseEntity.ok(userService.updateUser(id, request));
+        return userService.updateUser(id, request);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
-        return ResponseEntity.noContent().build();
     }
 }
